@@ -1,0 +1,46 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependencies
+node_modules/
+
+# Builds / dist
+dist/
+build/
+out/
+.coverage/
+coverage/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# IDE / editor
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+
+# TypeScript
+*.tsbuildinfo
+
+# Python (por si aplica)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Misc
+*.tmp
+*.temp
+.cache/
