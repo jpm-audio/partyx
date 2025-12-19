@@ -51,4 +51,4 @@ Work in progress. API may change until the first stable release.
 
 ## License
 
-MIT © Silent State Studio
+SEE LICENSE IN LICENSE.md
