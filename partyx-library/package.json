@@ -15,15 +15,10 @@
   "type": "module",
   "sideEffects": false,
 
-  "main": "./dist/ParticleEmitter.cjs",
-  "module": "./dist/ParticleEmitter.js",
-  "types": "./dist/ParticleEmitter.d.ts",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
   "exports": {
-    ".": {
-      "types": "./dist/ParticleEmitter.d.ts",
-      "import": "./dist/ParticleEmitter.js",
-      "require": "./dist/ParticleEmitter.cjs"
-    }
+    ".": "./src/index.ts"
   },
   "files": ["dist"],
 

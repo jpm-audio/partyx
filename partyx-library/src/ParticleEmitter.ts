@@ -563,8 +563,3 @@ export class ParticleEmitter extends ParticleContainer {
         super.destroy(options);
     }
 }
-
-// Public API re-exports (package entrypoint)
-export { ParticleItem } from "./ParticleItem";
-export { ParticlePool } from "./ParticlePool";
-export * from "./types";
