@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { PreviewConfig } from '../model/previewConfig'
 import PixiAppHost from '../pixi/PixiAppHost'
-import PartyxAdapter from '../../partyx/PartyxAdapter'
+import PartyxAdapter from '../../partyx/PartyxHandler'
 
 type PreviewCanvasProps = {
   config: PreviewConfig

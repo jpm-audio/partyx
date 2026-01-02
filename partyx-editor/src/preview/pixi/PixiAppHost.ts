@@ -2,15 +2,14 @@ import type { Ticker } from 'pixi.js'
 import { Application, Graphics, Text } from 'pixi.js'
 import type { PreviewConfig } from '../model/previewConfig'
 import { defaultPreviewConfig } from '../model/previewConfig'
-import type { PartyxPreviewHandle } from '../../partyx/PartyxAdapter'
-import PartyxAdapter from '../../partyx/PartyxAdapter'
+import { PartyxHandler } from 'src/partyx/PartyxHandler'
 
 /**
  * Manages a Pixi Application lifecycle outside of React.
  */
 export class PixiAppHost {
   private readonly container: HTMLElement
-  private readonly partyxAdapter?: PartyxAdapter
+  private partyxHandler: PartyxHandler
   private app: Application | null = null
   private resizeObserver?: ResizeObserver
   private backgroundLayer?: Graphics
@@ -19,11 +18,10 @@ export class PixiAppHost {
   private tickerHandler?: (deltaMS: number) => void
   private tickerListener?: (ticker: Ticker) => void
   private config: PreviewConfig = { ...defaultPreviewConfig }
-  private partyxHandle?: PartyxPreviewHandle
 
-  constructor(container: HTMLElement, partyxAdapter?: PartyxAdapter) {
+  constructor(container: HTMLElement) {
     this.container = container
-    this.partyxAdapter = partyxAdapter
+    this.partyxHandler = new PartyxHandler()
   }
 
   /**
@@ -39,7 +37,7 @@ export class PixiAppHost {
 
     const app = new Application()
     await app.init({
-      backgroundColor: this.toColorNumber(config.backgroundColor),
+      backgroundColor: config.backgroundColor,
       antialias: true,
       autoDensity: true,
       resizeTo: this.container,
@@ -49,7 +47,7 @@ export class PixiAppHost {
     this.app = app
 
     this.setupScene()
-    await this.attachPartyx()
+    await this.partyxHandler.attach(this.app, this.config)
     this.setupResizeHandling()
   }
 
@@ -57,7 +55,9 @@ export class PixiAppHost {
    * Stop the ticker without destroying the app.
    */
   public stop() {
-    if (!this.app) return
+    if (!this.app) {
+      return
+    }
     this.app.stop()
   }
 
@@ -65,7 +65,9 @@ export class PixiAppHost {
    * Resize the renderer to the container and reposition content.
    */
   public resize() {
-    if (!this.app) return
+    if (!this.app) {
+      return
+    }
 
     const { width, height } = this.container.getBoundingClientRect()
     this.app.renderer.resize(width, height)
@@ -79,11 +81,7 @@ export class PixiAppHost {
     this.config = config
     this.applyConfigToScene()
 
-    if (this.partyxHandle?.updateConfig) {
-      this.partyxHandle.updateConfig(config)
-    } else if (this.app && this.partyxAdapter && !this.partyxHandle) {
-      this.partyxHandle = await this.partyxAdapter.attach(this.app, this.config)
-    }
+    await this.partyxHandler.updateConfig(config)
   }
 
   /**
@@ -92,8 +90,8 @@ export class PixiAppHost {
   public destroy() {
     this.stop()
 
-    this.partyxHandle?.destroy?.()
-    this.partyxHandle = undefined
+    this.partyxHandler.destroy()
+    //this.partyxHandler = undefined
 
     if (this.app && this.tickerListener) {
       this.app.ticker.remove(this.tickerListener)
@@ -105,7 +103,10 @@ export class PixiAppHost {
     this.resizeObserver = undefined
 
     if (this.app) {
-      this.app.destroy({ removeView: true }, { children: true, texture: true, textureSource: true, context: true })
+      this.app.destroy(
+        { removeView: true },
+        { children: true, texture: true, textureSource: true, context: true },
+      )
       this.app = null
     }
 
@@ -139,14 +140,14 @@ export class PixiAppHost {
     this.app.stage.addChild(shape)
     this.app.stage.addChild(label)
 
-    this.tickerHandler = (deltaMS) => {
+    this.tickerHandler = deltaMS => {
       if (this.rotationShape) {
         const speed = this.config.rotationSpeed ?? 1
         this.rotationShape.rotation += 0.0015 * deltaMS * speed
       }
     }
 
-    this.tickerListener = (ticker) => {
+    this.tickerListener = ticker => {
       this.tickerHandler?.(ticker.deltaMS)
     }
 
@@ -181,33 +182,18 @@ export class PixiAppHost {
   }
 
   private updateBackground() {
-    if (!this.app || !this.backgroundLayer) return
+    if (!this.app || !this.backgroundLayer) {
+      return
+    }
 
-    const color = this.toColorNumber(this.config.backgroundColor)
     const { width, height } = this.app.screen
 
     this.backgroundLayer.clear()
-    this.backgroundLayer.rect(0, 0, width, height).fill(color)
+    this.backgroundLayer.rect(0, 0, width, height).fill(this.config.backgroundColor)
   }
 
   private applyConfigToScene() {
     this.updateBackground()
-  }
-
-  private toColorNumber(value: string): number {
-    if (!value) return this.toColorNumber(defaultPreviewConfig.backgroundColor)
-    const normalized = value.startsWith('#') ? value.slice(1) : value
-    const parsed = Number.parseInt(normalized, 16)
-    if (Number.isNaN(parsed)) {
-      return this.toColorNumber(defaultPreviewConfig.backgroundColor)
-    }
-
-    return parsed
-  }
-
-  private async attachPartyx() {
-    if (!this.app || !this.partyxAdapter) return
-    this.partyxHandle = await this.partyxAdapter.attach(this.app, this.config)
   }
 }
 
